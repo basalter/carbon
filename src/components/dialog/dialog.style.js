@@ -3,6 +3,7 @@ import baseTheme from '../../style/themes/base';
 import { StyledFormFooter } from '../../__deprecated__/components/form/form.style';
 
 const dialogSizes = {
+  'auto': 'auto',
   'extra-small': '300px',
   small: '380px',
   'medium-small': '540px',
