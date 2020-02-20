@@ -11,8 +11,7 @@ import {
   StyledAnchorNavigation,
   StyledNavigation,
   StyledContent,
-  StyledNavigationItem,
-  StyledAnchorDivider
+  StyledNavigationItem
 } from './anchor-navigation.style';
 
 const expectNavigationItemToBeSelected = (index, wrapper) => assertStyleMatch({
@@ -20,10 +19,10 @@ const expectNavigationItemToBeSelected = (index, wrapper) => assertStyleMatch({
   borderLeftColor: baseTheme.colors.primary
 }, wrapper.find(StyledNavigationItem).at(index), { modifier: 'a' });
 
-const Content = React.forwardRef(({ title, height, noFocusableElement }, ref) => <>
+const Content = React.forwardRef(({ title, noTextbox }, ref) => <>
   <div ref={ ref } className='focusableContent'>
-    {!noFocusableElement && <Textbox label={ title } />}
-    <h2 style={ { height } }>
+    {!noTextbox && <Textbox label={ title } />}
+    <h2>
       {title}
     </h2>
   </div>
@@ -57,55 +56,38 @@ describe('AnchorNavigation', () => {
       <AnchorNavigation
         stickyNavigation={
           <>
-            <AnchorNavigationItem target={ ref1 } href='#id1'>
+            <AnchorNavigationItem target={ ref1 }>
               First
             </AnchorNavigationItem>
-            <AnchorNavigationItem target={ ref2 } href='#id2'>
+            <AnchorNavigationItem target={ ref2 }>
               Second
             </AnchorNavigationItem>
-            <AnchorNavigationItem target={ ref3 } href='#id3'>
+            <AnchorNavigationItem target={ ref3 }>
               Third
             </AnchorNavigationItem>
-            <AnchorNavigationItem target={ ref4 } href='#id4'>
+            <AnchorNavigationItem target={ ref4 }>
               The slighly longer than expected fourth navigation item
             </AnchorNavigationItem>
-            <AnchorNavigationItem target={ ref5 } href='#id4'>
+            <AnchorNavigationItem target={ ref5 }>
               Fifth
             </AnchorNavigationItem>
           </>
         }
         { ...props }
       >
-        <Content
-          ref={ ref1 }
-          title='First section'
-          height={ 300 }
-        />
+        <Content ref={ ref1 } title='First section' />
         <AnchorSectionDivider />
-        <Content
-          ref={ ref2 }
-          title='Second section'
-          height={ 300 }
-        />
+        <Content ref={ ref2 } title='Second section' />
         <AnchorSectionDivider />
         <Content
           ref={ ref3 }
           title='Third section'
-          height={ 300 }
-          noFocusableElement
+          noTextbox
         />
         <AnchorSectionDivider />
-        <Content
-          ref={ ref4 }
-          title='Fourth section'
-          height={ 300 }
-        />
+        <Content ref={ ref4 } title='Fourth section' />
         <AnchorSectionDivider />
-        <Content
-          ref={ ref5 }
-          title='Fifth section'
-          height={ 300 }
-        />
+        <Content ref={ ref5 } title='Fifth section' />
       </AnchorNavigation>,
     );
   };
