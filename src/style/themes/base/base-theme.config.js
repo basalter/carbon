@@ -41,6 +41,11 @@ export default (palette) => {
       }
     },
 
+    anchorNavigation: {
+      divider: palette.slateTint(80),
+      navItemHoverBackground: palette.slateTint(90)
+    },
+
     menu: {
       focus: palette.slateTint(95),
       divider: palette.slateTint(90),

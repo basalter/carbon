@@ -1,0 +1,133 @@
+import React, {
+  useState, useRef, useEffect, useCallback
+} from 'react';
+import PropTypes from 'prop-types';
+import throttle from 'lodash/throttle';
+
+import Event from '../../utils/helpers/events';
+import { StyledAnchorNavigation, StyledNavigation, StyledContent } from './anchor-navigation.style';
+import AnchorNavigationItem from './anchor-navigation-item.component';
+
+const AnchorNavigation = ({ children, stickyNavigation, styleOverride }) => {
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const sectionRefs = useRef(React.Children.map(stickyNavigation.props.children, child => child.props.target));
+
+  const anchorRefs = useRef(Array.from({
+    length: React.Children.count(stickyNavigation.props.children)
+  }, () => React.createRef()));
+
+  const contentRef = useRef();
+
+  const navigationRef = useRef();
+
+  const setSelectedAnchorBasedOnScroll = useCallback(throttle(() => {
+    const topEdgeOffsets = sectionRefs.current.map(({ current }) => current.getBoundingClientRect().top);
+    const { top: navTopOffset } = navigationRef.current.getBoundingClientRect();
+    const indexOfSmallestNegativeTopOffset = topEdgeOffsets.reduce((currentTopIndex, topOffset, index) => {
+      if (topOffset > navTopOffset) return currentTopIndex;
+      return topOffset > topEdgeOffsets[currentTopIndex] ? index : currentTopIndex;
+    }, 0);
+
+    setSelectedIndex(indexOfSmallestNegativeTopOffset);
+  }, 200), []);
+
+  useEffect(() => {
+    window.addEventListener('scroll', setSelectedAnchorBasedOnScroll, true);
+    return () => window.removeEventListener('scroll', setSelectedAnchorBasedOnScroll, true);
+  }, [setSelectedAnchorBasedOnScroll]);
+
+  const scrollToItem = (event, index) => {
+    event.preventDefault();
+    const sectionToScroll = sectionRefs.current[index].current;
+    sectionToScroll.scrollIntoView({ block: 'start', inline: 'nearest', behavior: 'smooth' });
+
+    // eslint-disable-next-line max-len
+    const defaultFocusableSelectors = 'button, [href], input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])';
+    const firstFocusableElement = sectionToScroll.querySelector(defaultFocusableSelectors);
+    if (firstFocusableElement) {
+      firstFocusableElement.focus({ preventScroll: true });
+    }
+  };
+
+  const focusNavItem = (event, index) => {
+    event.preventDefault();
+    let newIndex = index;
+    if (index === -1) {
+      newIndex = anchorRefs.current.length - 1;
+    } else if (index === anchorRefs.current.length) {
+      newIndex = 0;
+    }
+    anchorRefs.current[newIndex].current.focus();
+  };
+
+  const handleKeyDown = (event, index) => {
+    if (Event.isUpKey(event)) {
+      focusNavItem(event, index - 1);
+    } else if (Event.isDownKey(event)) {
+      focusNavItem(event, index + 1);
+    } else if (Event.isEnterKey(event) || Event.isSpaceKey(event)) {
+      scrollToItem(event, index);
+    }
+  };
+
+  return (
+    <StyledAnchorNavigation
+      ref={ contentRef }
+      data-component='anchor-navigation'
+      styleOverride={ styleOverride.root }
+    >
+      <StyledNavigation
+        ref={ navigationRef }
+        data-element='anchor-sticky-navigation'
+        styleOverride={ styleOverride.navigation }
+      >
+        {React.Children.map(
+          stickyNavigation.props.children,
+          (child, index) => React.cloneElement(child, {
+            isSelected: index === selectedIndex,
+            tabIndex: index === selectedIndex ? 0 : 1,
+            onClick: ev => scrollToItem(ev, index),
+            onKeyDown: ev => handleKeyDown(ev, index),
+            ref: anchorRefs.current[index]
+          })
+        )}
+      </StyledNavigation>
+      <StyledContent styleOverride={ styleOverride.content }>
+        {children}
+      </StyledContent>
+    </StyledAnchorNavigation>
+  );
+};
+
+AnchorNavigation.propTypes = {
+  children: PropTypes.node,
+  /** The AnchorNavigationItems components to be rendered in the sticky navigation */
+  stickyNavigation: (props, propName, componentName) => {
+    let error;
+    const prop = props[propName];
+
+    React.Children.forEach(prop.props.children, (child) => {
+      if (AnchorNavigationItem.displayName !== child.type.displayName) {
+        error = new Error(
+          `\`${componentName}\` only accepts children of type \`${AnchorNavigationItem.displayName}\`.`
+        );
+      }
+    });
+
+    return error;
+  },
+  /** Allows to override existing component styles */
+  styleOverride: PropTypes.shape({
+    root: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+    navigation: PropTypes.oneOfType([PropTypes.func, PropTypes.object]),
+    content: PropTypes.oneOfType([PropTypes.func, PropTypes.object])
+  })
+};
+
+AnchorNavigation.defaultProps = {
+  styleOverride: {}
+};
+
+
+export default AnchorNavigation;
